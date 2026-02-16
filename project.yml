@@ -1,0 +1,21 @@
+name: CalenTask
+options:
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    PRODUCT_BUNDLE_IDENTIFIER: com.calentask.app
+    SWIFT_VERSION: 5.9
+targets:
+  CalenTask:
+    type: application
+    platform: iOS
+    sources:
+      - path: CalenTask
+        excludes:
+          - Info.plist
+    info:
+      path: CalenTask/Info.plist
+    settings:
+      base:
+        INFOPLIST_FILE: CalenTask/Info.plist
