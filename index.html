@@ -1,45 +1,656 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CalenTask - Productivity App</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CalenTask — Задачник и планировщик календаря</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f7f7f7; color: #333; }
-    header { background: #007AFF; color: white; padding: 20px; text-align: center; }
-    main { max-width: 600px; margin: 30px auto; padding: 0 20px; }
-    h1 { margin-bottom: 10px; }
-    p { margin-bottom: 15px; line-height: 1.5; }
-    a { color: #007AFF; text-decoration: none; }
-    footer { text-align: center; margin: 40px 0; color: gray; font-size: 14px; }
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --danger: #ef4444;
+      --border: #334155;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0%, var(--bg) 60%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .container {
+      width: min(1100px, 94vw);
+      margin: 28px auto 40px;
+    }
+
+    h1, h2, h3 { margin: 0; }
+
+    .app-header {
+      background: linear-gradient(120deg, #0284c7, #2563eb);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .app-header p {
+      margin: 10px 0 0;
+      color: #dbeafe;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: rgba(17, 24, 39, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(4px);
+    }
+
+    .form-row {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .form-row.two {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #475569;
+      border-radius: 10px;
+      background: #0b1220;
+      color: var(--text);
+      padding: 10px 11px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: #0284c7; }
+    .btn-secondary { background: #475569; }
+    .btn-success { background: #16a34a; }
+    .btn-danger { background: var(--danger); }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: end;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .toolbar .grow { flex: 1; min-width: 180px; }
+
+    .task-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+      max-height: 560px;
+      overflow: auto;
+    }
+
+    .task {
+      border: 1px solid #334155;
+      background: #0b1220;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .task.completed {
+      opacity: 0.72;
+      border-color: #14532d;
+    }
+
+    .task-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .task-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .badge {
+      font-size: 12px;
+      border-radius: 999px;
+      padding: 4px 8px;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+    }
+
+    .priority-high { border-color: #ef4444; color: #fecaca; }
+    .priority-medium { border-color: #f59e0b; color: #fde68a; }
+    .priority-low { border-color: #22c55e; color: #bbf7d0; }
+
+    .task-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 12px;
+      line-height: 1.4;
+    }
+
+    .empty {
+      border: 1px dashed #475569;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    @media (max-width: 960px) {
+      .grid { grid-template-columns: 1fr; }
+      .task-list { max-height: none; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>CalenTask</h1>
-    <p>Smart Calendar & Focus Planner</p>
-  </header>
-  <main>
-    <h2>About</h2>
-    <p>CalenTask is a minimalist productivity app that lets you create task templates and schedule them directly in your Apple Calendar. Plan your day in seconds!</p>
+  <div class="container">
+    <header class="app-header">
+      <h1>CalenTask</h1>
+      <p>Планируйте задачи и в один клик добавляйте их как события в календарь.</p>
+    </header>
 
-    <h2>Features</h2>
-    <ul>
-      <li>One-tap task templates</li>
-      <li>Goals & routines</li>
-      <li>Pomodoro focus timer</li>
-      <li>Notes manager</li>
-      <li>Works offline</li>
-    </ul>
+    <main class="grid">
+      <section class="card">
+        <h2 id="formTitle">Новая задача</h2>
+        <p class="hint">Заполните время, чтобы сразу сформировать календарное событие.</p>
 
-    <h2>Download</h2>
-    <p>Available on <strong>App Store</strong></p>
+        <form id="taskForm">
+          <input type="hidden" id="taskId" />
 
-    <h2>Support</h2>
-    <p>For help: <a href="https://github.com/maqsadahmadzoda/calentask">Support Page</a></p>
-  </main>
-  <footer>
-    © 2026 CalenTask
-  </footer>
+          <div class="form-row">
+            <div>
+              <label for="title">Название задачи *</label>
+              <input id="title" name="title" required maxlength="80" placeholder="Например: Подготовить презентацию" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="description">Описание</label>
+              <textarea id="description" name="description" maxlength="500" placeholder="Добавьте детали, ссылки, заметки"></textarea>
+            </div>
+          </div>
+
+          <div class="form-row two">
+            <div>
+              <label for="date">Дата *</label>
+              <input id="date" name="date" type="date" required />
+            </div>
+            <div>
+              <label for="priority">Приоритет</label>
+              <select id="priority" name="priority">
+                <option value="low">Низкий</option>
+                <option value="medium" selected>Средний</option>
+                <option value="high">Высокий</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row two">
+            <div>
+              <label for="startTime">Начало</label>
+              <input id="startTime" name="startTime" type="time" />
+            </div>
+            <div>
+              <label for="endTime">Окончание</label>
+              <input id="endTime" name="endTime" type="time" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn-primary" type="submit">Сохранить задачу</button>
+            <button class="btn-secondary" id="cancelEdit" type="button" hidden>Отменить редактирование</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Мои задачи</h2>
+
+        <div class="toolbar">
+          <div class="grow">
+            <label for="search">Поиск</label>
+            <input id="search" placeholder="По названию или описанию" />
+          </div>
+          <div>
+            <label for="statusFilter">Статус</label>
+            <select id="statusFilter">
+              <option value="all">Все</option>
+              <option value="active">Активные</option>
+              <option value="done">Выполненные</option>
+            </select>
+          </div>
+          <div>
+            <label for="sortBy">Сортировка</label>
+            <select id="sortBy">
+              <option value="dateAsc">По дате ↑</option>
+              <option value="dateDesc">По дате ↓</option>
+              <option value="priority">По приоритету</option>
+              <option value="createdDesc">Сначала новые</option>
+            </select>
+          </div>
+        </div>
+
+        <ul id="taskList" class="task-list"></ul>
+        <div id="emptyState" class="empty" hidden>
+          Пока нет задач. Добавьте первую задачу слева.
+        </div>
+
+        <p class="hint">
+          Кнопка <strong>ICS</strong> скачивает файл события, который можно открыть в Apple Calendar, Google Calendar, Outlook и других календарях.
+          Кнопки Google/Outlook откроют создание события в веб-календаре.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'calentask.tasks.v1';
+
+    const form = document.getElementById('taskForm');
+    const formTitle = document.getElementById('formTitle');
+    const cancelEditBtn = document.getElementById('cancelEdit');
+    const taskListEl = document.getElementById('taskList');
+    const emptyStateEl = document.getElementById('emptyState');
+    const searchEl = document.getElementById('search');
+    const statusFilterEl = document.getElementById('statusFilter');
+    const sortByEl = document.getElementById('sortBy');
+
+    const fields = {
+      id: document.getElementById('taskId'),
+      title: document.getElementById('title'),
+      description: document.getElementById('description'),
+      date: document.getElementById('date'),
+      priority: document.getElementById('priority'),
+      startTime: document.getElementById('startTime'),
+      endTime: document.getElementById('endTime'),
+    };
+
+    let tasks = loadTasks();
+
+    function loadTasks() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveTasks() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    function resetForm() {
+      form.reset();
+      fields.id.value = '';
+      formTitle.textContent = 'Новая задача';
+      cancelEditBtn.hidden = true;
+      if (!fields.date.value) fields.date.value = todayISO();
+    }
+
+    function todayISO() {
+      const now = new Date();
+      const tzOffset = now.getTimezoneOffset() * 60000;
+      return new Date(now - tzOffset).toISOString().slice(0, 10);
+    }
+
+    function priorityRank(p) {
+      return p === 'high' ? 1 : p === 'medium' ? 2 : 3;
+    }
+
+    function sortTasks(list) {
+      const sort = sortByEl.value;
+      return [...list].sort((a, b) => {
+        const aDate = new Date(`${a.date}T${a.startTime || '00:00'}`);
+        const bDate = new Date(`${b.date}T${b.startTime || '00:00'}`);
+
+        if (sort === 'dateAsc') return aDate - bDate;
+        if (sort === 'dateDesc') return bDate - aDate;
+        if (sort === 'priority') return priorityRank(a.priority) - priorityRank(b.priority) || aDate - bDate;
+        return b.createdAt - a.createdAt;
+      });
+    }
+
+    function getFilteredTasks() {
+      const query = searchEl.value.trim().toLowerCase();
+      const status = statusFilterEl.value;
+
+      const filtered = tasks.filter((task) => {
+        const byStatus =
+          status === 'all' ? true :
+          status === 'done' ? task.completed :
+          !task.completed;
+
+        const haystack = `${task.title} ${task.description}`.toLowerCase();
+        const byQuery = !query || haystack.includes(query);
+
+        return byStatus && byQuery;
+      });
+
+      return sortTasks(filtered);
+    }
+
+    function formatDate(date, startTime, endTime) {
+      const base = new Date(`${date}T00:00`);
+      const prettyDate = base.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+      if (startTime && endTime) return `${prettyDate}, ${startTime}–${endTime}`;
+      if (startTime) return `${prettyDate}, ${startTime}`;
+      return prettyDate;
+    }
+
+    function renderTasks() {
+      const list = getFilteredTasks();
+      taskListEl.innerHTML = '';
+
+      emptyStateEl.hidden = list.length !== 0;
+
+      for (const task of list) {
+        const li = document.createElement('li');
+        li.className = `task ${task.completed ? 'completed' : ''}`;
+
+        const priorityLabel = task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий';
+
+        li.innerHTML = `
+          <div class="task-head">
+            <div>
+              <div class="task-title">${escapeHtml(task.title)}</div>
+              <div class="meta">${formatDate(task.date, task.startTime, task.endTime)}</div>
+            </div>
+            <input type="checkbox" data-action="toggle" data-id="${task.id}" ${task.completed ? 'checked' : ''} title="Отметить выполненной" />
+          </div>
+          ${task.description ? `<div class="meta">${escapeHtml(task.description)}</div>` : ''}
+          <div class="badges">
+            <span class="badge priority-${task.priority}">${priorityLabel}</span>
+            <span class="badge">${task.completed ? 'Выполнено' : 'В работе'}</span>
+          </div>
+          <div class="task-actions">
+            <button class="btn-secondary" data-action="edit" data-id="${task.id}">Редактировать</button>
+            <button class="btn-success" data-action="ics" data-id="${task.id}">ICS</button>
+            <button class="btn-primary" data-action="google" data-id="${task.id}">Google Calendar</button>
+            <button class="btn-secondary" data-action="outlook" data-id="${task.id}">Outlook</button>
+            <button class="btn-danger" data-action="delete" data-id="${task.id}">Удалить</button>
+          </div>
+        `;
+
+        taskListEl.appendChild(li);
+      }
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function toDateTimeRange(task) {
+      const start = new Date(`${task.date}T${task.startTime || '09:00'}`);
+      let end = new Date(`${task.date}T${task.endTime || ''}`);
+
+      if (!task.endTime || Number.isNaN(end.getTime()) || end <= start) {
+        end = new Date(start.getTime() + 60 * 60 * 1000);
+      }
+
+      return { start, end };
+    }
+
+    function formatICSDate(date) {
+      const yyyy = date.getUTCFullYear();
+      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(date.getUTCDate()).padStart(2, '0');
+      const hh = String(date.getUTCHours()).padStart(2, '0');
+      const mi = String(date.getUTCMinutes()).padStart(2, '0');
+      const ss = String(date.getUTCSeconds()).padStart(2, '0');
+      return `${yyyy}${mm}${dd}T${hh}${mi}${ss}Z`;
+    }
+
+    function buildICS(task) {
+      const { start, end } = toDateTimeRange(task);
+      const uid = `${task.id}@calentask.local`;
+      const dtStamp = formatICSDate(new Date());
+      const dtStart = formatICSDate(start);
+      const dtEnd = formatICSDate(end);
+      const summary = task.title.replace(/[\n,;]+/g, ' ').trim();
+      const description = (task.description || '').replace(/[\n,;]+/g, ' ').trim();
+
+      return [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//CalenTask//Task Planner//RU',
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${dtStamp}`,
+        `DTSTART:${dtStart}`,
+        `DTEND:${dtEnd}`,
+        `SUMMARY:${summary}`,
+        `DESCRIPTION:${description}`,
+        'END:VEVENT',
+        'END:VCALENDAR',
+      ].join('\r\n');
+    }
+
+    function downloadICS(task) {
+      const ics = buildICS(task);
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slugify(task.title) || 'event'}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function slugify(text) {
+      return text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/(^-|-$)/g, '');
+    }
+
+    function toGoogleDate(date) {
+      const yyyy = date.getUTCFullYear();
+      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(date.getUTCDate()).padStart(2, '0');
+      const hh = String(date.getUTCHours()).padStart(2, '0');
+      const mi = String(date.getUTCMinutes()).padStart(2, '0');
+      const ss = String(date.getUTCSeconds()).padStart(2, '0');
+      return `${yyyy}${mm}${dd}T${hh}${mi}${ss}Z`;
+    }
+
+    function openGoogleCalendar(task) {
+      const { start, end } = toDateTimeRange(task);
+      const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: task.title,
+        details: task.description || '',
+        dates: `${toGoogleDate(start)}/${toGoogleDate(end)}`,
+      });
+      window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, '_blank');
+    }
+
+    function openOutlook(task) {
+      const { start, end } = toDateTimeRange(task);
+      const params = new URLSearchParams({
+        path: '/calendar/action/compose',
+        rru: 'addevent',
+        subject: task.title,
+        body: task.description || '',
+        startdt: start.toISOString(),
+        enddt: end.toISOString(),
+      });
+      window.open(`https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`, '_blank');
+    }
+
+    function upsertTask(payload) {
+      if (payload.id) {
+        tasks = tasks.map((t) => (t.id === payload.id ? { ...t, ...payload } : t));
+      } else {
+        tasks.push({
+          ...payload,
+          id: crypto.randomUUID(),
+          completed: false,
+          createdAt: Date.now(),
+        });
+      }
+      saveTasks();
+      renderTasks();
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const payload = {
+        id: fields.id.value || null,
+        title: fields.title.value.trim(),
+        description: fields.description.value.trim(),
+        date: fields.date.value,
+        priority: fields.priority.value,
+        startTime: fields.startTime.value,
+        endTime: fields.endTime.value,
+      };
+
+      if (!payload.title || !payload.date) return;
+
+      upsertTask(payload);
+      resetForm();
+    });
+
+    cancelEditBtn.addEventListener('click', resetForm);
+
+    [searchEl, statusFilterEl, sortByEl].forEach((el) => {
+      el.addEventListener('input', renderTasks);
+      el.addEventListener('change', renderTasks);
+    });
+
+    taskListEl.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const action = target.dataset.action;
+      const id = target.dataset.id;
+      if (!action || !id) return;
+
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
+
+      if (action === 'delete') {
+        tasks = tasks.filter((t) => t.id !== id);
+        saveTasks();
+        renderTasks();
+        return;
+      }
+
+      if (action === 'edit') {
+        fields.id.value = task.id;
+        fields.title.value = task.title;
+        fields.description.value = task.description;
+        fields.date.value = task.date;
+        fields.priority.value = task.priority;
+        fields.startTime.value = task.startTime;
+        fields.endTime.value = task.endTime;
+        formTitle.textContent = 'Редактирование задачи';
+        cancelEditBtn.hidden = false;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      if (action === 'ics') return downloadICS(task);
+      if (action === 'google') return openGoogleCalendar(task);
+      if (action === 'outlook') return openOutlook(task);
+    });
+
+    taskListEl.addEventListener('change', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      if (target.dataset.action !== 'toggle') return;
+
+      const id = target.dataset.id;
+      tasks = tasks.map((task) => task.id === id ? { ...task, completed: target.checked } : task);
+      saveTasks();
+      renderTasks();
+    });
+
+    fields.date.value = todayISO();
+    renderTasks();
+  </script>
 </body>
 </html>
