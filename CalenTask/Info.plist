@@ -37,5 +37,7 @@
 	</array>
 	<key>NSCalendarsUsageDescription</key>
 	<string>CalenTask использует календарь, чтобы создавать события из ваших задач.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>CalenTask использует полный доступ к календарю, чтобы создавать и сохранять события из ваших задач.</string>
 </dict>
 </plist>
